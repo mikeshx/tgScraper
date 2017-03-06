@@ -27,7 +27,7 @@ public class tgscraper {
         linkList = getLinks(nPages, args);
         cleanList(linkList);
     }
-
+       
     public static List<String> getLinks(int nPages, String[] args) throws IOException {
 
         List<String> linkList = new ArrayList<>();
@@ -38,11 +38,13 @@ public class tgscraper {
 
             newURL = args[0].concat("&start=") + i + '0';
             System.out.println("Parsing " + newURL + newLine);
-
+            
+            
             Document doc = Jsoup.connect(newURL)
                     .userAgent("\tMozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0")
                     .timeout(3000).get();
-
+            
+            // Extract the page links located at the a tag inside the h3
             for (Element pageLinks : doc.select("h3.r a")) {
 
                 String title = pageLinks.text();
@@ -51,7 +53,7 @@ public class tgscraper {
 
                 System.out.println("Title: " + title + " ---> " + pageLink);
 
-                // Open the url to get a link
+                // Open the page url to get a tg link
                 try {
                     Document docLink = Jsoup.connect(pageLink)
                             .userAgent("\tMozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0")
@@ -59,9 +61,12 @@ public class tgscraper {
                             .timeout(60000).get();
 
                     // if (pageLink.startsWith("https://www.youtube.com/")) { sites.getYT(); }
-
+                    
+                    // Select all the elements of the document
                     Elements elements = docLink.body().select("*");
-
+                    
+                    // Get the text of each element and
+                    // Check if there is a valid tg link
                     for (Element element : elements) {
                         if (element.ownText().matches("(.*)https://t.me/joinchat/AAAAA(.*)") ||
                                 element.ownText().matches("(.*)https://telegram.me/joinchat/(.*)") ||
@@ -78,16 +83,18 @@ public class tgscraper {
             }
             System.out.println("linkList size: " + linkList.size() +newLine);
         }
+        // Returns the 'dirty' list of links, that will be cleaned later
         return linkList;
     }
-
+    
     public static void cleanList(List<String> linkList) {
 
         List<String> cleanList = new ArrayList<String>();
         Set<String>  hs        = new HashSet<>();
         String       tme       = "https://t.me/joinchat/";
         String       tme_2     = "https://telegram.me/joinchat/";
-
+        
+        // Clean the unnecessary output from the previous list
         for (int i = 0; i < linkList.size(); i++) {
             Pattern pattern = Pattern.compile(tme);
             Matcher matcher = pattern.matcher(linkList.get(i));
@@ -109,6 +116,7 @@ public class tgscraper {
         }
 
         // Remove duplicates from the list
+        // By adding the contents to a Set
         hs.addAll(cleanList);
         cleanList.clear();
         cleanList.addAll(hs);
