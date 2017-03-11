@@ -16,18 +16,17 @@ import java.util.regex.Pattern;
 public class tgscraper {
     public static void main(String[] args) throws IOException {
 
-        List<String> linkList;
-
         if (args.length != 2) {
             System.out.println("usage: google_url n_pages");
             System.exit(0);
         }
 
-        int nPages = Integer.parseInt(args[1]);
-        linkList = getLinks(nPages, args);
+        int          nPages   = Integer.parseInt(args[1]);
+        List<String> linkList = getLinks(nPages, args);
+
         cleanList(linkList);
     }
-       
+
     public static List<String> getLinks(int nPages, String[] args) throws IOException {
 
         List<String> linkList = new ArrayList<>();
@@ -38,64 +37,78 @@ public class tgscraper {
 
             newURL = args[0].concat("&start=") + i + '0';
             System.out.println("Parsing " + newURL + newLine);
-            
-            
+
             Document doc = Jsoup.connect(newURL)
                     .userAgent("\tMozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0")
                     .timeout(3000).get();
-            
+
             // Extract the page links located at the a tag inside the h3
             for (Element pageLinks : doc.select("h3.r a")) {
 
                 String title = pageLinks.text();
                 String pageLink = pageLinks.attr("href");
-                boolean f = false;
+                boolean found = false;
 
                 System.out.println("Title: " + title + " ---> " + pageLink);
 
                 // Open the page url to get a tg link
                 try {
+                    Elements elements = null;
+
+                    // Connect to a google url
                     Document docLink = Jsoup.connect(pageLink)
                             .userAgent("\tMozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0")
                             .ignoreHttpErrors(true)
                             .timeout(60000).get();
 
-                    // if (pageLink.startsWith("https://www.youtube.com/")) { sites.getYT(); }
-                    
-                    // Select all the elements of the document
-                    Elements elements = docLink.body().select("*");
-                    
-                    // Get the text of each element and
-                    // Check if there is a valid tg link
-                    for (Element element : elements) {
-                        if (element.ownText().matches("(.*)https://t.me/joinchat/AAAAA(.*)") ||
-                                element.ownText().matches("(.*)https://telegram.me/joinchat/(.*)") ||
-                                element.ownText().matches("(.*)https://t.me/joinchat/(.*)") && !f) {
+                    // If we find a youtube link, we call a function to parse it
+                    if (pageLink.startsWith("https://www.youtube.com/")) {
+                        sites.getYTLinks(docLink, linkList);
+                    } else {
 
-                            System.out.println("Link found: " + element.ownText() + newLine);
-                            linkList.add(element.ownText());
-                            f = true;
+                        // Select all the elements of the document
+                        elements = docLink.body().select("*");
+
+                        // Get the text of each element and
+                        // Check if there is a valid tg link
+                        for (Element element : elements) {
+                            String cleanString;
+
+                            if (element.ownText().matches("(.*)https://t.me/joinchat/AAAAA(.*)") ||
+                                    element.ownText().matches("(.*)https://telegram.me/joinchat/(.*)") ||
+                                    element.ownText().matches("(.*)https://t.me/joinchat/(.*)") && !found) {
+
+                                // Remove spaces from the results and add it to a list
+                                cleanString = element.ownText().replaceAll("\\s+","");
+                                linkList.add(cleanString);
+
+                                System.out.println("Link found: " + cleanString + newLine);
+                                found = true;
+                            }
                         }
                     }
+
                 } catch (IOException e) {
                     System.out.println("Error: " + e);
                 }
             }
             System.out.println("linkList size: " + linkList.size() +newLine);
         }
-        // Returns the 'dirty' list of links, that will be cleaned later
+
+        // Returns the 'dirty' list of links that will be cleaned later
         return linkList;
     }
-    
+
     public static void cleanList(List<String> linkList) {
 
         List<String> cleanList = new ArrayList<String>();
         Set<String>  hs        = new HashSet<>();
         String       tme       = "https://t.me/joinchat/";
         String       tme_2     = "https://telegram.me/joinchat/";
-        
+
         // Clean the unnecessary output from the previous list
         for (int i = 0; i < linkList.size(); i++) {
+
             Pattern pattern = Pattern.compile(tme);
             Matcher matcher = pattern.matcher(linkList.get(i));
 
