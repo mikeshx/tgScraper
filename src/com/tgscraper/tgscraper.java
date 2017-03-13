@@ -5,11 +5,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,13 +21,16 @@ public class tgscraper {
         int          nPages   = Integer.parseInt(args[1]);
         List<String> linkList = getLinks(nPages, args);
 
-        cleanList(linkList);
+        linkList = cleanList(linkList);
+        writeList(linkList);
     }
+
+    public static String newLine  = System.getProperty("line.separator");
 
     public static List<String> getLinks(int nPages, String[] args) throws IOException {
 
         List<String> linkList = new ArrayList<>();
-        String       newLine  = System.getProperty("line.separator"), newURL;
+        String       newURL;
 
         for (int i = 1; i <= nPages; i++) {
             System.out.println("Page " + i + newLine);
@@ -92,14 +92,13 @@ public class tgscraper {
                     System.out.println("Error: " + e);
                 }
             }
-            System.out.println("linkList size: " + linkList.size() +newLine);
         }
 
         // Returns the 'dirty' list of links that will be cleaned later
         return linkList;
     }
 
-    public static void cleanList(List<String> linkList) {
+    public static List<String> cleanList(List<String> linkList) {
 
         List<String> cleanList = new ArrayList<String>();
         Set<String>  hs        = new HashSet<>();
@@ -137,6 +136,51 @@ public class tgscraper {
         for (int j = 0; j < cleanList.size(); j++) {
             System.out.println(cleanList.get(j));
         }
-        System.out.println("cleanList size: " + cleanList.size());
+        System.out.println("Found " + cleanList.size() + " links" +newLine);
+
+        return cleanList;
+    }
+
+    public static void writeList (List<String> linkList) throws IOException {
+
+        Properties   prop      = new Properties();
+        InputStream  input     = null;
+
+        String       pathName  = "";
+        String       fileName  = "links.txt";
+
+        // Get the path name from config.properties
+        try {
+            input = new FileInputStream("config.properties");
+            prop.load(input);
+            pathName = prop.getProperty("path_name");
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } finally {
+            if (input != null) try {
+                input.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("Writing links to: " + pathName.concat(fileName) + " ..." +newLine);
+        File path = new File(pathName);
+
+        // Write the list of links to a text file
+        if (path.exists() && path.isDirectory()) {
+
+            FileWriter writer = new FileWriter(pathName.concat(fileName));
+            for(String str: linkList) {
+                writer.write(str + System.getProperty("line.separator"));
+            }
+            writer.close();
+            System.out.println("Done.");
+
+        } else {
+            System.out.println("The specified directory does not exist");
+            System.exit(1);
+        }
     }
 }
