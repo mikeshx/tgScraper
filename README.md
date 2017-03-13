@@ -5,4 +5,8 @@ A simple scraper written in **Java** that gets telegram links from a given googl
 ### Usage
     java -jar myprogram.jar google_url n_pages
     
+### config.properties
+
+*path_name* must contain the path where you want to save the output.
+    
 
