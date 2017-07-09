@@ -1,5 +1,3 @@
-package com.tgscraper;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,7 +12,7 @@ public class tgscraper {
     public static void main(String[] args) throws IOException {
 
         if (args.length != 2) {
-            System.out.println("usage: google_url n_pages");
+            System.out.println("usage: google_url | n_pages");
             System.exit(0);
         }
 
@@ -27,6 +25,7 @@ public class tgscraper {
 
     public static String newLine  = System.getProperty("line.separator");
 
+    /* Get the links */
     public static List<String> getLinks(int nPages, String[] args) throws IOException {
 
         List<String> linkList = new ArrayList<>();
@@ -87,17 +86,16 @@ public class tgscraper {
                             }
                         }
                     }
-
                 } catch (IOException e) {
                     System.out.println("Error: " + e);
                 }
             }
         }
-
         // Returns the 'dirty' list of links that will be cleaned later
         return linkList;
     }
 
+    /* Clean the list of links */
     public static List<String> cleanList(List<String> linkList) {
 
         List<String> cleanList = new ArrayList<String>();
@@ -105,7 +103,6 @@ public class tgscraper {
         String       tme       = "https://t.me/joinchat/";
         String       tme_2     = "https://telegram.me/joinchat/";
 
-        // Clean the unnecessary output from the previous list
         for (int i = 0; i < linkList.size(); i++) {
 
             Pattern pattern = Pattern.compile(tme);
@@ -127,27 +124,27 @@ public class tgscraper {
             }
         }
 
-        // Remove duplicates from the list
-        // By adding the contents to a Set
+        // Remove duplicates from the list by adding the contents to a set
         hs.addAll(cleanList);
         cleanList.clear();
         cleanList.addAll(hs);
 
         for (int j = 0; j < cleanList.size(); j++) {
-            System.out.println(cleanList.get(j));
+            System.out.println(j+1 + ": " + cleanList.get(j));
         }
         System.out.println("Found " + cleanList.size() + " links" +newLine);
 
         return cleanList;
     }
 
+    /* Write the list of links to a file */
     public static void writeList (List<String> linkList) throws IOException {
 
         Properties   prop      = new Properties();
         InputStream  input     = null;
 
         String       pathName  = "";
-        String       fileName  = "links.txt";
+        String       fileName  = "tg_links.txt";
 
         // Get the path name from config.properties
         try {
